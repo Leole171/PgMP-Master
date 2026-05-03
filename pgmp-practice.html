@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PgMP Master — Daily Practice</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --card: #16161f;
+    --border: #2a2a3a;
+    --accent: #c8a96e;
+    --accent2: #7b68ee;
+    --green: #4ade80;
+    --red: #f87171;
+    --text: #e8e6f0;
+    --muted: #7a7890;
+    --correct: #052e16;
+    --wrong: #2d0a0a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  .logo span { color: var(--text); }
+
+  .header-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .header-stats strong { color: var(--accent); }
+
+  /* MAIN LAYOUT */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* DOMAIN TABS */
+  .domain-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .domain-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.4rem 0.9rem;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s;
+  }
+  .domain-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .domain-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  /* PROGRESS BAR */
+  .progress-wrap {
+    margin-bottom: 2rem;
+  }
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    border-radius: 99px;
+  }
+
+  /* QUESTION CARD */
+  .q-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    animation: slideIn 0.35s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .q-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--accent);
+  }
+
+  .q-domain-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .q-domain-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .q-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.6rem;
+  }
+
+  .q-text {
+    font-size: 1.08rem;
+    line-height: 1.7;
+    color: var(--text);
+    font-weight: 300;
+    margin-bottom: 1.8rem;
+  }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 0.7rem; }
+
+  .option-btn {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.95rem 1.1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.93rem;
+    color: var(--text);
+    font-weight: 300;
+    line-height: 1.5;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--accent2);
+    background: rgba(123,104,238,0.06);
+  }
+  .option-btn .opt-letter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent2);
+    min-width: 20px;
+    padding-top: 2px;
+  }
+  .option-btn.correct {
+    border-color: var(--green);
+    background: var(--correct);
+    color: var(--green);
+  }
+  .option-btn.correct .opt-letter { color: var(--green); }
+  .option-btn.wrong {
+    border-color: var(--red);
+    background: var(--wrong);
+    color: var(--red);
+  }
+  .option-btn.wrong .opt-letter { color: var(--red); }
+  .option-btn:disabled { cursor: default; }
+
+  /* EXPLANATION */
+  .explanation {
+    margin-top: 1.5rem;
+    padding: 1.2rem 1.4rem;
+    border-left: 3px solid var(--accent2);
+    background: rgba(123,104,238,0.07);
+    border-radius: 0 3px 3px 0;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  .explanation h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    margin-bottom: 0.6rem;
+  }
+  .explanation p {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #b8b6cc;
+    font-weight: 300;
+  }
+  .explanation .ref {
+    margin-top: 0.6rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--muted);
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 0.7rem 1.6rem;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary:hover { background: #d4ba7e; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+
+  /* SCORE PANEL */
+  .score-panel {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .score-tile {
+    flex: 1;
+    min-width: 100px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1rem;
+    text-align: center;
+  }
+  .score-tile .val {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+  .score-tile .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+  }
+  .score-tile.green .val { color: var(--green); }
+  .score-tile.red .val { color: var(--red); }
+  .score-tile.gold .val { color: var(--accent); }
+  .score-tile.purple .val { color: var(--accent2); }
+
+  /* RESULTS SCREEN */
+  #results-screen {
+    display: none;
+    text-align: center;
+    padding: 3rem 0;
+    animation: slideIn 0.4s ease;
+  }
+  #results-screen h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+  }
+  #results-screen p {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  /* STREAK BADGE */
+  .streak {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(200,169,110,0.1);
+    border: 1px solid rgba(200,169,110,0.3);
+    border-radius: 99px;
+    padding: 0.3rem 0.8rem;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    header { padding: 0 1rem; }
+    main { padding: 1.5rem 1rem 3rem; }
+    .q-card { padding: 1.4rem 1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Pg<span>MP</span> Master</div>
+  <div class="header-stats">
+    <span>Streak: <strong id="hdr-streak">0</strong>🔥</span>
+    <span>Score: <strong id="hdr-score">0%</strong></span>
+    <span id="hdr-domain-lbl" style="color:var(--accent)"></span>
+  </div>
+</header>
+
+<main>
+  <!-- SCORE PANEL -->
+  <div class="score-panel">
+    <div class="score-tile green">
+      <div class="val" id="sc-correct">0</div>
+      <div class="lbl">Correct</div>
+    </div>
+    <div class="score-tile red">
+      <div class="val" id="sc-wrong">0</div>
+      <div class="lbl">Wrong</div>
+    </div>
+    <div class="score-tile gold">
+      <div class="val" id="sc-pct">—</div>
+      <div class="lbl">Accuracy</div>
+    </div>
+    <div class="score-tile purple">
+      <div class="val" id="sc-remaining">—</div>
+      <div class="lbl">Remaining</div>
+    </div>
+  </div>
+
+  <!-- DOMAIN FILTER -->
+  <div class="domain-nav" id="domain-nav"></div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-meta">
+      <span id="prog-label">Question 1 of —</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- QUESTION AREA -->
+  <div id="quiz-screen">
+    <div class="q-card" id="q-card">
+      <div class="q-domain-label" id="q-domain">Loading…</div>
+      <div class="q-number" id="q-number"></div>
+      <div class="q-text" id="q-text"></div>
+      <div class="options" id="options"></div>
+      <div class="explanation" id="explanation" style="display:none">
+        <h4>💡 Explanation</h4>
+        <p id="exp-text"></p>
+        <div class="ref" id="exp-ref"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-ghost" id="btn-prev" onclick="prevQ()">← Prev</button>
+      <div class="streak" id="streak-badge">🔥 Streak: 0</div>
+      <button class="btn btn-primary" id="btn-next" onclick="nextQ()">Next →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="results-screen">
+    <h2 id="res-emoji">🎯</h2>
+    <h2 id="res-title">Session Complete!</h2>
+    <p id="res-subtitle"></p>
+    <div class="score-panel" style="max-width:480px;margin:2rem auto;">
+      <div class="score-tile green"><div class="val" id="res-correct">0</div><div class="lbl">Correct</div></div>
+      <div class="score-tile gold"><div class="val" id="res-pct">0%</div><div class="lbl">Score</div></div>
+      <div class="score-tile purple"><div class="val" id="res-streak">0</div><div class="lbl">Best Streak</div></div>
+    </div>
+    <button class="btn btn-primary" onclick="restartQuiz()" style="margin-top:1rem">Restart Practice</button>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  QUESTION BANK — 60 original PgMP-style questions
+// ═══════════════════════════════════════════════════
+const QUESTIONS = [
+  // ── DOMAIN 1: STRATEGIC PROGRAM MANAGEMENT ──
+  {
+    domain: "Strategic Program Management",
+    text: "An organization's strategic plan changes mid-program, reducing the priority of your program's primary benefit. What is the BEST first action for the program manager?",
+    options: [
+      "Continue the program as planned since the charter has already been approved",
+      "Reassess the program's alignment with the updated strategy and escalate to the program sponsor",
+      "Immediately close the program to avoid wasting resources",
+      "Request an emergency steering committee meeting to reallocate budget"
+    ],
+    correct: 1,
+    explanation: "Program managers must continuously align programs with organizational strategy. When strategic priorities shift, the first step is to reassess alignment and engage the sponsor — not unilaterally continue or terminate. Escalation with analysis preserves governance integrity.",
+    ref: "PMI Standard for Program Management — Strategic Alignment"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "During a program's definition phase, the program manager discovers that two component projects have overlapping deliverables. What should the program manager do FIRST?",
+    options: [
+      "Eliminate one of the component projects immediately",
+      "Update the program roadmap and inform the governance board",
+      "Conduct a dependency analysis and coordinate with component project managers to resolve the overlap",
+      "Escalate the issue to the project sponsors of both components"
+    ],
+    correct: 2,
+    explanation: "Dependency analysis is the correct starting point. The program manager's role is to identify, analyze, and coordinate inter-project dependencies before escalating or making structural decisions. This ensures an informed, collaborative resolution.",
+    ref: "PMI Standard for Program Management — Program Integration Management"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "A program manager is asked to evaluate a proposed program before it begins. Which document BEST helps determine whether the program is strategically justified?",
+    options: [
+      "Program management plan",
+      "Business case",
+      "Program charter",
+      "Benefits realization plan"
+    ],
+    correct: 1,
+    explanation: "The business case is the primary document used to justify a program before it is formally authorized. It outlines the expected benefits, costs, risks, and strategic fit. The program charter is created after approval, and the program management plan comes later in planning.",
+    ref: "PMI Standard for Program Management — Business Case"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "A program manager must balance short-term project deliverables with long-term organizational benefit realization. What framework BEST supports this balance?",
+    options: [
+      "Risk management plan",
+      "Program roadmap",
+      "Work breakdown structure",
+      "Responsibility assignment matrix"
+    ],
+    correct: 1,
+    explanation: "The program roadmap provides a high-level timeline linking program components to strategic milestones and benefit delivery over time. It helps program managers balance immediate outputs with long-term outcomes in alignment with organizational strategy.",
+    ref: "PMI Standard for Program Management — Program Roadmap"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "Which of the following BEST defines the unique value a program manager adds compared to managing individual projects separately?",
+    options: [
+      "Ensuring each project is delivered on time and within budget",
+      "Managing the interdependencies and optimizing collective benefits across projects",
+      "Providing detailed technical guidance to project teams",
+      "Allocating resources evenly across all component projects"
+    ],
+    correct: 1,
+    explanation: "The program manager's unique value lies in managing interdependencies and realizing collective benefits that could not be achieved by projects managed independently. This is the core distinction between program and project management.",
+    ref: "PMI Standard for Program Management — Program vs. Project Management"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "An organization wants to launch a digital transformation initiative spanning multiple business units. How should the program manager approach scope definition?",
+    options: [
+      "Define scope based solely on IT deliverables",
+      "Use the strategic objectives and expected benefits to frame the program scope",
+      "Copy the scope from a similar past program",
+      "Let each business unit define its own scope independently"
+    ],
+    correct: 1,
+    explanation: "Program scope should be derived from strategic objectives and the benefits the organization aims to achieve. Starting from outcomes — not outputs — ensures the program remains aligned with enterprise goals throughout its lifecycle.",
+    ref: "PMI Standard for Program Management — Scope Definition"
+  },
+
+  // ── DOMAIN 2: PROGRAM LIFE CYCLE MANAGEMENT ──
+  {
+    domain: "Program Life Cycle Management",
+    text: "A program is transitioning from the 'Delivery' phase to the 'Closure' phase. What is the MOST critical activity during this transition?",
+    options: [
+      "Releasing all project resources immediately",
+      "Conducting a final risk assessment",
+      "Verifying that all planned benefits have been transitioned to operations",
+      "Archiving all program documentation"
+    ],
+    correct: 2,
+    explanation: "Transitioning benefits to operations is the defining activity when moving to closure. Unless realized benefits are embedded into the receiving organization, the program's purpose is unfulfilled. Documentation and resource release follow this critical handoff.",
+    ref: "PMI Standard for Program Management — Program Closure Phase"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "During the program definition phase, a program manager is developing a schedule for component projects. Which factor is MOST important to consider?",
+    options: [
+      "Individual project managers' preferences",
+      "Interdependencies between components and their impact on benefit delivery",
+      "Historical data from unrelated programs",
+      "Stakeholder availability for status meetings"
+    ],
+    correct: 1,
+    explanation: "Inter-component dependencies directly affect the sequence and timing of benefit delivery. Scheduling must account for how one project's output feeds another's input to avoid cascading delays. This is a core program-level concern not addressed at the project level.",
+    ref: "PMI Standard for Program Management — Program Schedule Management"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "A component project within the program has been cancelled. What should the program manager do NEXT?",
+    options: [
+      "Immediately reallocate the cancelled project's budget to other components",
+      "Assess the impact of the cancellation on program benefits and update the program plan accordingly",
+      "Notify the PMO and wait for further instructions",
+      "Reassign the project team to a new component project"
+    ],
+    correct: 1,
+    explanation: "When a component is cancelled, the program manager must first assess the impact on overall program benefits and then update plans accordingly. Reallocation and reassignment are decisions that follow the impact analysis — acting on them first could misalign the program.",
+    ref: "PMI Standard for Program Management — Component Transition"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "Which of the following BEST describes the purpose of a phase-gate review in program management?",
+    options: [
+      "To approve detailed project plans for each component",
+      "To evaluate program health and determine whether to proceed, adjust, or terminate the program",
+      "To assess individual project manager performance",
+      "To update the program risk register"
+    ],
+    correct: 1,
+    explanation: "Phase-gate reviews (also called governance reviews or tollgates) are formal decision points where the governance board assesses whether the program should continue, be adjusted, or stopped. They are not operational reviews but strategic go/no-go checkpoints.",
+    ref: "PMI Standard for Program Management — Governance Reviews"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "A program manager needs to initiate a new component project to address an emerging strategic need. What is the FIRST step?",
+    options: [
+      "Hire a project manager for the new component",
+      "Update the program roadmap and seek governance approval",
+      "Develop a detailed project plan",
+      "Identify resource requirements for the new component"
+    ],
+    correct: 1,
+    explanation: "Before initiating a new component, the program manager must update the program roadmap to reflect the new component's fit and obtain governance approval. Hiring, planning, and resourcing come after the strategic and governance process is followed.",
+    ref: "PMI Standard for Program Management — Component Initiation"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "At which phase of the program life cycle is the benefits realization plan FIRST created?",
+    options: [
+      "Program delivery phase",
+      "Program closure phase",
+      "Program definition phase",
+      "Pre-program setup"
+    ],
+    correct: 2,
+    explanation: "The benefits realization plan is created during the program definition phase as part of planning how benefits will be identified, quantified, tracked, and transitioned. Creating it during delivery or closure would be too late to guide execution effectively.",
+    ref: "PMI Standard for Program Management — Benefits Realization Planning"
+  },
+
+  // ── DOMAIN 3: BENEFITS MANAGEMENT ──
+  {
+    domain: "Benefits Management",
+    text: "A program sponsor insists on adding a new feature that would delight end users but has no clear link to any defined program benefit. What should the program manager do?",
+    options: [
+      "Approve the feature since the sponsor requested it",
+      "Reject the feature to protect the program scope",
+      "Evaluate whether the feature can be linked to a program benefit; if not, escalate to governance",
+      "Defer the feature to a future program phase"
+    ],
+    correct: 2,
+    explanation: "Program managers must ensure all additions can be traced to defined benefits. If the feature cannot be justified through benefit alignment, the governance board — not the program manager alone — should decide. Unilateral rejection or approval bypasses proper governance.",
+    ref: "PMI Standard for Program Management — Benefits Identification"
+  },
+  {
+    domain: "Benefits Management",
+    text: "Which metric is MOST useful for measuring whether a program is on track to deliver its intended benefits?",
+    options: [
+      "Cost performance index (CPI)",
+      "Benefits realization rate against the benefits register",
+      "Number of milestones completed",
+      "Schedule variance (SV)"
+    ],
+    correct: 1,
+    explanation: "Tracking the benefits realization rate against the benefits register directly measures progress toward program outcomes. CPI and SV measure project-level efficiency, and milestone counts are output-focused. Programs are defined by their outcomes — not their outputs.",
+    ref: "PMI Standard for Program Management — Benefits Monitoring"
+  },
+  {
+    domain: "Benefits Management",
+    text: "A program is delivering on time and within budget, but stakeholders are dissatisfied. What is the MOST likely root cause?",
+    options: [
+      "Poor project management practices",
+      "Benefits were not clearly defined or communicated during planning",
+      "The program schedule was too aggressive",
+      "The program sponsor was not engaged"
+    ],
+    correct: 1,
+    explanation: "Delivering on time and on budget but failing to satisfy stakeholders often signals a benefits definition or communication gap. If expected outcomes were not clearly articulated and agreed upon, delivery of outputs alone cannot create stakeholder satisfaction.",
+    ref: "PMI Standard for Program Management — Benefits Planning"
+  },
+  {
+    domain: "Benefits Management",
+    text: "When should the benefits realization plan be updated?",
+    options: [
+      "Only at the start of the program",
+      "Only during phase-gate reviews",
+      "Continuously throughout the program as conditions change",
+      "Only when a benefit is fully realized"
+    ],
+    correct: 2,
+    explanation: "The benefits realization plan is a living document. It must be updated continuously as market conditions, stakeholder needs, and program circumstances evolve. Treating it as a static artifact undermines the program's ability to adapt and deliver sustained value.",
+    ref: "PMI Standard for Program Management — Benefits Realization Planning"
+  },
+  {
+    domain: "Benefits Management",
+    text: "Which of the following is an example of a 'sustained benefit' in program management?",
+    options: [
+      "A software module delivered by a component project",
+      "A 20% increase in customer satisfaction maintained two years after program closure",
+      "A project completed within its original budget",
+      "A risk that was successfully mitigated during the program"
+    ],
+    correct: 1,
+    explanation: "Sustained benefits are outcomes that persist after the program ends and are embedded in operations. A long-term improvement in customer satisfaction is the clearest example. Deliverables and risk mitigations are outputs or activities, not lasting organizational benefits.",
+    ref: "PMI Standard for Program Management — Benefits Sustainment"
+  },
+  {
+    domain: "Benefits Management",
+    text: "A program's expected financial benefit has decreased due to market changes. The program is halfway complete. What is the BEST course of action?",
+    options: [
+      "Continue the program unchanged since it is already halfway done",
+      "Conduct a benefit-cost re-evaluation and present findings to governance",
+      "Immediately reduce the program budget to compensate",
+      "Add new features to increase perceived value"
+    ],
+    correct: 1,
+    explanation: "A significant change in expected benefits requires a formal re-evaluation. The program manager should analyze revised benefit projections versus remaining costs and present this to the governance board for a strategic decision — not act unilaterally.",
+    ref: "PMI Standard for Program Management — Benefits Management"
+  },
+
+  // ── DOMAIN 4: STAKEHOLDER ENGAGEMENT ──
+  {
+    domain: "Stakeholder Engagement",
+    text: "A key stakeholder group is resistant to a program's outcomes. The resistance appears to be based on a misunderstanding of program goals. What should the program manager do FIRST?",
+    options: [
+      "Escalate the resistance to the program sponsor",
+      "Engage the stakeholder group directly to clarify program goals and understand their concerns",
+      "Reduce the stakeholder group's involvement in the program",
+      "Issue a formal communication correcting the misunderstanding"
+    ],
+    correct: 1,
+    explanation: "Direct, two-way engagement is the most effective first step to address resistance rooted in misunderstanding. Stakeholder engagement is about dialogue, not broadcasting. Escalating or reducing involvement without first attempting direct communication is premature.",
+    ref: "PMI Standard for Program Management — Stakeholder Engagement"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "Which tool is MOST effective for tracking the level of engagement needed from each stakeholder throughout the program?",
+    options: [
+      "RACI matrix",
+      "Stakeholder register with engagement assessment",
+      "Risk register",
+      "Communication management plan"
+    ],
+    correct: 1,
+    explanation: "The stakeholder register — augmented with an engagement assessment grid showing current vs. desired engagement levels — is the most effective tool for tracking and planning stakeholder engagement. The RACI shows roles; the communication plan shows channels; neither tracks engagement levels.",
+    ref: "PMI Standard for Program Management — Stakeholder Register"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "A program manager realizes that two influential stakeholders have conflicting interests that could derail a critical decision. What is the BEST approach?",
+    options: [
+      "Side with the stakeholder who has more authority",
+      "Avoid bringing both stakeholders into the same discussion",
+      "Facilitate a structured dialogue focused on shared program objectives",
+      "Escalate the conflict to executive leadership immediately"
+    ],
+    correct: 2,
+    explanation: "Facilitating a dialogue anchored in shared program objectives allows conflicting parties to find common ground. Choosing sides undermines trust; avoidance delays resolution; immediate escalation should be a last resort after direct facilitation has been attempted.",
+    ref: "PMI Standard for Program Management — Stakeholder Engagement Planning"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "What is the PRIMARY difference between stakeholder communication and stakeholder engagement in program management?",
+    options: [
+      "Communication is one-way; engagement is two-way and focused on building commitment",
+      "Engagement is only needed during the closure phase",
+      "Communication requires more resources than engagement",
+      "Engagement is the responsibility of the program sponsor, not the program manager"
+    ],
+    correct: 0,
+    explanation: "Communication is primarily the transmission of information (often one-directional), while engagement is an active, two-way process aimed at building understanding, trust, and commitment. Effective program management requires both, but engagement is strategically more powerful.",
+    ref: "PMI Standard for Program Management — Stakeholder Engagement vs. Communication"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "New stakeholders are identified midway through program execution. What should the program manager do?",
+    options: [
+      "Include them in the next scheduled governance meeting only",
+      "Add them to the stakeholder register, assess their influence and interest, and develop an engagement approach",
+      "Assign them to a component project manager to handle",
+      "Wait until the next phase to formally onboard them"
+    ],
+    correct: 1,
+    explanation: "Stakeholder identification is an ongoing process. When new stakeholders emerge, the program manager must immediately update the stakeholder register, assess their potential impact, and develop an appropriate engagement strategy — not defer or delegate this responsibility.",
+    ref: "PMI Standard for Program Management — Stakeholder Identification"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "A senior executive who was previously supportive of the program has become neutral. What should the program manager do?",
+    options: [
+      "Continue with the current engagement approach since the executive isn't opposed",
+      "Investigate the reason for the change and develop a targeted re-engagement strategy",
+      "Report the change to the governance board as a risk",
+      "Reduce the program's scope to address potential executive concerns"
+    ],
+    correct: 1,
+    explanation: "A shift from supportive to neutral in a key stakeholder is an early warning signal. The program manager should investigate the root cause and proactively re-engage before the executive becomes resistant. Passive continuation of current engagement is insufficient.",
+    ref: "PMI Standard for Program Management — Stakeholder Monitoring"
+  },
+
+  // ── DOMAIN 5: GOVERNANCE ──
+  {
+    domain: "Governance",
+    text: "A program governance board has asked for more frequent status updates than currently planned. What is the BEST response from the program manager?",
+    options: [
+      "Agree immediately and increase reporting frequency",
+      "Refuse, as excessive reporting diverts resources from program delivery",
+      "Discuss the specific concerns driving the request and propose a targeted solution",
+      "Delegate reporting to the component project managers"
+    ],
+    correct: 2,
+    explanation: "Understanding the governance board's underlying concerns allows the program manager to address them effectively. The right cadence balances oversight with execution. Blindly agreeing or refusing ignores the root cause, while delegation undermines the program manager's accountability.",
+    ref: "PMI Standard for Program Management — Program Governance"
+  },
+  {
+    domain: "Governance",
+    text: "Which document formally authorizes the program manager to apply organizational resources to program activities?",
+    options: [
+      "Program management plan",
+      "Business case",
+      "Program charter",
+      "Program roadmap"
+    ],
+    correct: 2,
+    explanation: "The program charter formally authorizes the program and grants the program manager the authority to use organizational resources. The business case provides justification, while the management plan and roadmap are planning tools developed after authorization.",
+    ref: "PMI Standard for Program Management — Program Charter"
+  },
+  {
+    domain: "Governance",
+    text: "A component project manager wants to make a change that will impact another component. Who has the authority to approve this change?",
+    options: [
+      "The component project manager",
+      "The program manager, since the change crosses component boundaries",
+      "The program sponsor",
+      "The PMO director"
+    ],
+    correct: 1,
+    explanation: "Changes that cross component boundaries affect the program as a whole and fall within the program manager's authority. Project managers have authority within their component scope only. The program sponsor gets involved for strategic changes; the PMO provides support, not authorization.",
+    ref: "PMI Standard for Program Management — Integrated Change Control"
+  },
+  {
+    domain: "Governance",
+    text: "What is the PRIMARY role of the program steering committee?",
+    options: [
+      "To manage day-to-day program activities",
+      "To provide strategic oversight, approve major decisions, and ensure the program aligns with organizational goals",
+      "To resolve conflicts between component project managers",
+      "To develop the program management plan"
+    ],
+    correct: 1,
+    explanation: "The program steering committee (governance board) provides strategic oversight. It approves key decisions, ensures alignment with organizational strategy, and handles issues that exceed the program manager's authority. Day-to-day management, conflict resolution, and planning remain with the program manager.",
+    ref: "PMI Standard for Program Management — Governance Structure"
+  },
+  {
+    domain: "Governance",
+    text: "A program audit reveals that a component project has bypassed the program's change control process. What should the program manager do FIRST?",
+    options: [
+      "Immediately escalate to the governance board",
+      "Assess the impact of the bypassed changes on the program and enforce the change control process going forward",
+      "Replace the component project manager",
+      "Document the finding and include it in the next status report"
+    ],
+    correct: 1,
+    explanation: "The program manager should first assess the impact of the unauthorized changes on the program, then reinforce the change control process to prevent recurrence. Escalation is appropriate if the impact is significant. Documentation alone is insufficient; root cause must be addressed.",
+    ref: "PMI Standard for Program Management — Program Governance"
+  },
+  {
+    domain: "Governance",
+    text: "Which of the following BEST represents a program governance principle?",
+    options: [
+      "All decisions must be escalated to the governance board for approval",
+      "Decision-making authority should be clearly defined and delegated to the appropriate level",
+      "The program manager should make all decisions independently to maintain efficiency",
+      "Governance should be applied only during phase-gate reviews"
+    ],
+    correct: 1,
+    explanation: "Good governance defines clear decision rights at each level — not centralizing everything or delegating everything. This ensures that decisions are made by those with appropriate context and authority, enabling both oversight and execution efficiency.",
+    ref: "PMI Standard for Program Management — Governance Principles"
+  },
+
+  // ── MORE STRATEGIC ──
+  {
+    domain: "Strategic Program Management",
+    text: "A program manager's organization is undergoing a merger. How should the program manager respond to ensure program continuity?",
+    options: [
+      "Place the program on hold until the merger is complete",
+      "Reassess program alignment with the combined organization's strategy and engage new decision-makers",
+      "Continue with the original plan since it was approved before the merger",
+      "Transfer the program to the acquiring company's PMO"
+    ],
+    correct: 1,
+    explanation: "Organizational changes such as mergers require the program manager to reassess strategic alignment and build relationships with new stakeholders and decision-makers. Continuing unchanged or pausing indefinitely both risk the program's relevance and funding.",
+    ref: "PMI Standard for Program Management — Environmental Factors"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "Which of the following is the BEST description of program success criteria?",
+    options: [
+      "All projects completed on time and within budget",
+      "Organizational benefits realized and sustained as defined in the business case",
+      "Stakeholders satisfied with all deliverables",
+      "No scope changes during program execution"
+    ],
+    correct: 1,
+    explanation: "Program success is ultimately measured by whether the intended organizational benefits are realized and sustained — as articulated in the business case. Project delivery efficiency, stakeholder satisfaction, and scope stability are contributing factors, not the definition of success.",
+    ref: "PMI Standard for Program Management — Program Success"
+  },
+
+  // ── MORE BENEFITS ──
+  {
+    domain: "Benefits Management",
+    text: "Which of the following BEST describes 'emergent benefits' in a program?",
+    options: [
+      "Benefits that were planned from the start but realized late",
+      "Benefits that appear unexpectedly as a result of program activities and were not part of the original plan",
+      "Benefits that exceed the targets set in the benefits register",
+      "Benefits from cancelled component projects"
+    ],
+    correct: 1,
+    explanation: "Emergent benefits arise unexpectedly during program execution. While unplanned, they should be captured in the benefits register and managed. Recognizing emergent benefits demonstrates program management maturity and can enhance strategic value.",
+    ref: "PMI Standard for Program Management — Benefits Identification"
+  },
+  {
+    domain: "Benefits Management",
+    text: "Who is PRIMARILY responsible for ensuring that program benefits are sustained after the program closes?",
+    options: [
+      "The program manager",
+      "The program sponsor and the receiving operational units",
+      "The PMO",
+      "The component project managers"
+    ],
+    correct: 1,
+    explanation: "After program closure, the program manager's role ends. Benefit sustainment becomes the responsibility of the program sponsor and the operational units that have received the benefits. The program manager should ensure a strong handoff, but ownership transfers at closure.",
+    ref: "PMI Standard for Program Management — Benefits Transition"
+  },
+
+  // ── MORE LIFE CYCLE ──
+  {
+    domain: "Program Life Cycle Management",
+    text: "A program has been running for two years when a major technology shift renders one component obsolete. What is the MOST appropriate response?",
+    options: [
+      "Complete the component as planned to maintain schedule integrity",
+      "Terminate the obsolete component and realign the program to leverage the new technology",
+      "Add a new component to run alongside the obsolete one",
+      "Defer the decision to the next phase-gate review"
+    ],
+    correct: 1,
+    explanation: "When a component becomes obsolete due to external changes, continuing it wastes resources. The program manager should terminate it and realign the program — potentially introducing a new component — to keep the program relevant and on a path to benefit delivery.",
+    ref: "PMI Standard for Program Management — Component Transition"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "What distinguishes a 'program' from a 'portfolio' in PMI's framework?",
+    options: [
+      "Programs always have larger budgets than portfolios",
+      "Portfolios manage programs and projects aligned to strategic objectives; programs manage related components to deliver specific benefits",
+      "Programs are temporary; portfolios are permanent organizational structures",
+      "A portfolio always contains exactly one program"
+    ],
+    correct: 1,
+    explanation: "Portfolios align all organizational programs and projects to strategic objectives. Programs are a subset of portfolios and focus on managing related components to deliver collective benefits. The distinction is about scope and purpose: strategic alignment vs. benefit realization.",
+    ref: "PMI Standard for Program Management — Program vs. Portfolio"
+  },
+
+  // ── MORE STAKEHOLDER ──
+  {
+    domain: "Stakeholder Engagement",
+    text: "A program manager is preparing a communication plan. Which of the following is the MOST important factor to consider?",
+    options: [
+      "The frequency of communication",
+      "The communication preferences, needs, and influence level of each stakeholder group",
+      "The cost of communication tools",
+      "The number of stakeholders involved"
+    ],
+    correct: 1,
+    explanation: "Effective communication plans are tailored to the audience. Understanding each stakeholder group's preferences, information needs, and influence level ensures that communication is relevant, timely, and drives the right decisions and behaviors.",
+    ref: "PMI Standard for Program Management — Communications Planning"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "A program manager observes growing apathy among operational staff who will eventually use the program's outputs. What is the BEST action?",
+    options: [
+      "Increase status report frequency to keep them informed",
+      "Develop a targeted change management and engagement strategy for the operational group",
+      "Involve the HR department to address the apathy",
+      "Wait for the program to deliver results, which will naturally increase interest"
+    ],
+    correct: 1,
+    explanation: "Apathy among future users is a risk to benefit adoption. A targeted engagement and change management approach — not just more information — is the appropriate response. Early and meaningful involvement in the program increases ownership and acceptance.",
+    ref: "PMI Standard for Program Management — Change Management"
+  },
+
+  // ── MORE GOVERNANCE ──
+  {
+    domain: "Governance",
+    text: "A program manager must resolve an issue that falls outside her defined decision-making authority. What should she do?",
+    options: [
+      "Make the decision and document it in the issue log",
+      "Escalate the issue through the defined governance escalation path",
+      "Ask the component project managers to resolve it collectively",
+      "Defer the decision until the issue resolves itself"
+    ],
+    correct: 1,
+    explanation: "Good governance defines escalation paths precisely for situations where issues exceed a manager's authority. Using the established escalation process maintains governance integrity and ensures appropriate decision-making. Unilateral decisions outside one's authority undermine the governance structure.",
+    ref: "PMI Standard for Program Management — Issue Escalation"
+  },
+  {
+    domain: "Governance",
+    text: "Which of the following is the BEST indicator of effective program governance?",
+    options: [
+      "The governance board meets frequently",
+      "Decisions are made at the right level, escalation paths are clear, and program health is regularly reviewed",
+      "The program manager reports directly to the CEO",
+      "There are no escalations during the program"
+    ],
+    correct: 1,
+    explanation: "Effective governance is not measured by meeting frequency or the absence of escalations (which may indicate issues are being suppressed). It is characterized by clear decision rights, effective escalation, and regular, honest health reviews that enable informed decisions.",
+    ref: "PMI Standard for Program Management — Governance Effectiveness"
+  },
+  {
+    domain: "Governance",
+    text: "A program governance board wants to terminate a program due to poor performance. Who has the final authority to make this decision?",
+    options: [
+      "The program manager",
+      "The portfolio management board or executive sponsor, as per governance framework",
+      "The program steering committee alone",
+      "The PMO director"
+    ],
+    correct: 1,
+    explanation: "Program termination is a strategic organizational decision that typically requires authority above the program steering committee level — usually the portfolio board or an executive with appropriate authority, as defined in the organization's governance framework.",
+    ref: "PMI Standard for Program Management — Program Termination"
+  },
+
+  // ── ADDITIONAL MIXED DOMAIN ──
+  {
+    domain: "Benefits Management",
+    text: "Which of the following is an example of a 'transition benefit' in program management?",
+    options: [
+      "Increased annual revenue achieved three years after program closure",
+      "A benefit realized as work is handed from the program to operational teams",
+      "A risk that was avoided due to proactive management",
+      "A milestone completed ahead of schedule"
+    ],
+    correct: 1,
+    explanation: "Transition benefits are realized at the point of handover from the program to operations. They are distinct from sustained benefits (which occur long after closure) and from program outputs (which are deliverables). Examples include operational efficiency gains realized at go-live.",
+    ref: "PMI Standard for Program Management — Benefits Transition"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "A program manager is asked to provide input to the organization's strategic planning process. What is the MOST valuable contribution?",
+    options: [
+      "Detailed project schedules from component projects",
+      "Insights on the program's progress toward strategic benefits and lessons that can inform future strategy",
+      "A list of all program risks",
+      "Budget actuals versus forecast"
+    ],
+    correct: 1,
+    explanation: "Program managers have a unique vantage point on how strategy is being translated into value. Contributing benefit delivery insights and lessons learned to strategic planning is the highest-value input — far more strategic than operational data like schedules or budget actuals.",
+    ref: "PMI Standard for Program Management — Strategy Contribution"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "Which of the following activities occurs during the 'pre-program setup' phase?",
+    options: [
+      "Executing component projects",
+      "Completing the benefits realization plan",
+      "Conducting initial feasibility assessment and developing the business case",
+      "Transitioning benefits to operations"
+    ],
+    correct: 2,
+    explanation: "Pre-program setup involves initial feasibility assessment, developing the business case, and identifying the program sponsor. Formal planning (benefits realization plan, etc.) occurs in the definition phase. Execution and transition occur in later phases.",
+    ref: "PMI Standard for Program Management — Pre-Program Setup"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "A program manager notices that a powerful stakeholder is consistently excluded from key discussions by the project team. What should the program manager do?",
+    options: [
+      "Let the project team manage their own stakeholder relationships",
+      "Ensure the stakeholder is included in appropriate program-level forums and address the exclusion pattern",
+      "Inform the governance board about the project team's behavior",
+      "Apologize to the stakeholder on behalf of the project team"
+    ],
+    correct: 1,
+    explanation: "Powerful stakeholders who feel excluded can derail programs. The program manager must ensure key stakeholders are engaged at the program level and address systemic exclusion patterns — not merely apologize or escalate without action.",
+    ref: "PMI Standard for Program Management — Stakeholder Engagement"
+  },
+  {
+    domain: "Governance",
+    text: "What is the MAIN purpose of a program management office (PMO) in relation to a program?",
+    options: [
+      "To make strategic decisions on behalf of the program manager",
+      "To provide administrative support, standards, and oversight tools to enable effective program management",
+      "To manage stakeholder relationships",
+      "To approve the program budget"
+    ],
+    correct: 1,
+    explanation: "The PMO supports programs by providing methodologies, tools, templates, and administrative functions. It does not replace the program manager's decision-making authority but enables it. Budget approval and stakeholder management remain with the governance structure and program manager.",
+    ref: "PMI Standard for Program Management — PMO Role"
+  },
+  {
+    domain: "Benefits Management",
+    text: "A program's benefits realization is consistently below plan. What is the FIRST step the program manager should take?",
+    options: [
+      "Replace underperforming component project managers",
+      "Conduct a root cause analysis to understand why benefits are not being realized as planned",
+      "Request additional budget from the sponsor",
+      "Reduce the scope of benefits to more achievable levels"
+    ],
+    correct: 1,
+    explanation: "Before taking any corrective action, the program manager must understand WHY benefits are falling short. Root cause analysis prevents treating symptoms rather than causes. Personnel changes, budget requests, and scope reductions may or may not be appropriate — but only after diagnosis.",
+    ref: "PMI Standard for Program Management — Benefits Monitoring and Control"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "A program manager notices that the organization's competitive landscape has changed significantly, potentially affecting program relevance. What is the BEST response?",
+    options: [
+      "Continue the program and adjust benefits metrics post-delivery",
+      "Conduct an environmental scan and present strategic options to the governance board",
+      "Pause all program activities pending strategic review",
+      "Reduce program scope to manage uncertainty"
+    ],
+    correct: 1,
+    explanation: "When the external environment changes, the program manager should conduct a structured environmental analysis and bring strategic options to the governance board. This maintains continuity while ensuring decision-makers have the information needed to adapt the program's strategic direction.",
+    ref: "PMI Standard for Program Management — Environmental Analysis"
+  },
+  {
+    domain: "Program Life Cycle Management",
+    text: "During program closure, the program manager discovers that a key lesson was not captured for a completed component. What should she do?",
+    options: [
+      "Skip it since the component is already closed",
+      "Document the lesson and include it in the program closure report and organizational knowledge base",
+      "Ask the component project manager to prepare a separate report",
+      "Only capture lessons from components that underperformed"
+    ],
+    correct: 1,
+    explanation: "Lessons learned from all components — successful or not — are valuable organizational assets. They should be documented and shared through the program closure report and the organizational knowledge repository, regardless of when the component closed.",
+    ref: "PMI Standard for Program Management — Lessons Learned"
+  },
+  {
+    domain: "Stakeholder Engagement",
+    text: "The program manager learns that a government regulatory body has new requirements that could affect the program. What is the BEST action?",
+    options: [
+      "Inform the legal team and wait for their guidance",
+      "Add the regulatory body as a stakeholder, assess the impact, and update the program plan accordingly",
+      "Ignore the requirements if they don't immediately affect ongoing work",
+      "Notify only the component project managers who are directly affected"
+    ],
+    correct: 1,
+    explanation: "Regulatory bodies are important external stakeholders. The program manager should formally add them to the stakeholder register, assess the full program impact of the new requirements, and update plans accordingly — not limit the response to direct effects only.",
+    ref: "PMI Standard for Program Management — External Stakeholders"
+  },
+  {
+    domain: "Governance",
+    text: "A program manager receives conflicting directives from the program sponsor and the portfolio manager. What should she do?",
+    options: [
+      "Follow the sponsor's directive since they are closer to the program",
+      "Follow the portfolio manager's directive since they have higher authority",
+      "Escalate the conflict to clarify governance authority and get aligned direction",
+      "Make an independent decision based on what is best for the program"
+    ],
+    correct: 2,
+    explanation: "Conflicting directives from senior stakeholders signal a governance gap that must be resolved — not worked around. The program manager should escalate to resolve the conflict and get a single, aligned direction. Acting independently or choosing a side without authorization could damage relationships and program outcomes.",
+    ref: "PMI Standard for Program Management — Governance Escalation"
+  },
+  {
+    domain: "Benefits Management",
+    text: "Which of the following BEST describes the difference between a program 'output' and a program 'outcome'?",
+    options: [
+      "Outputs are strategic; outcomes are tactical",
+      "Outputs are tangible deliverables produced by the program; outcomes are the changes in behavior or condition resulting from using those deliverables",
+      "Outputs are measured in money; outcomes are measured in time",
+      "Outcomes are created by project managers; outputs are created by the program manager"
+    ],
+    correct: 1,
+    explanation: "In program management, outputs are what is produced (e.g., a new system, a trained workforce), while outcomes are the changes those outputs enable (e.g., improved efficiency, higher customer retention). Programs are ultimately accountable for outcomes and the benefits they produce — not just outputs.",
+    ref: "PMI Standard for Program Management — Outcomes vs. Outputs"
+  },
+  {
+    domain: "Strategic Program Management",
+    text: "The program manager of a large infrastructure program is asked to attend the organization's strategic planning retreat. What should she contribute?",
+    options: [
+      "Detailed technical specifications of current deliverables",
+      "Perspective on how current programs are progressing toward strategic goals and what adjustments might be needed",
+      "A list of resource constraints across all component projects",
+      "Updated risk registers from each component"
+    ],
+    correct: 1,
+    explanation: "At a strategic planning level, the program manager's contribution should focus on strategic benefit progress and insights — not operational details. This executive-level input helps the organization calibrate strategy against actual program performance and course-correct.",
+    ref: "PMI Standard for Program Management — Strategic Contribution"
+  },
+  {
+    domain: "Governance",
+    text: "Which of the following BEST describes 'program governance' in the PgMP context?",
+    options: [
+      "The process of managing program risks",
+      "The framework of authority, accountability, and decision-making that oversees the program and ensures it meets organizational objectives",
+      "The set of project management standards applied to each component",
+      "The reporting structure between the program manager and project managers"
+    ],
+    correct: 1,
+    explanation: "Program governance is the overarching framework that defines authority, accountability, decision rights, and oversight mechanisms. It ensures the program operates within organizational guidelines and progresses toward its strategic objectives — broader than risk management or reporting structures alone.",
+    ref: "PMI Standard for Program Management — Governance Definition"
+  }
+];
+
+// ─── STATE ───
+let filtered = [...QUESTIONS];
+let currentIdx = 0;
+let answered = {};
+let correctCount = 0;
+let wrongCount = 0;
+let streak = 0;
+let bestStreak = 0;
+let activeFilter = 'All';
+
+const DOMAINS = ['All', 'Strategic Program Management', 'Program Life Cycle Management',
+                 'Benefits Management', 'Stakeholder Engagement', 'Governance'];
+
+// ─── INIT ───
+function init() {
+  buildDomainNav();
+  renderScores();
+  renderQuestion();
+}
+
+function buildDomainNav() {
+  const nav = document.getElementById('domain-nav');
+  nav.innerHTML = '';
+  DOMAINS.forEach(d => {
+    const btn = document.createElement('button');
+    btn.className = 'domain-btn' + (d === activeFilter ? ' active' : '');
+    btn.textContent = d === 'All' ? '🌐 All' :
+      d === 'Strategic Program Management' ? '🎯 Strategic' :
+      d === 'Program Life Cycle Management' ? '🔄 Life Cycle' :
+      d === 'Benefits Management' ? '💎 Benefits' :
+      d === 'Stakeholder Engagement' ? '🤝 Stakeholders' : '🏛️ Governance';
+    btn.onclick = () => setFilter(d);
+    nav.appendChild(btn);
+  });
+}
+
+function setFilter(domain) {
+  activeFilter = domain;
+  filtered = domain === 'All' ? [...QUESTIONS] : QUESTIONS.filter(q => q.domain === domain);
+  currentIdx = 0;
+  answered = {};
+  correctCount = 0;
+  wrongCount = 0;
+  streak = 0;
+  buildDomainNav();
+  renderScores();
+  renderQuestion();
+  document.getElementById('quiz-screen').style.display = 'block';
+  document.getElementById('results-screen').style.display = 'none';
+}
+
+// ─── RENDER QUESTION ───
+function renderQuestion() {
+  if (currentIdx >= filtered.length) {
+    showResults();
+    return;
+  }
+
+  const q = filtered[currentIdx];
+  const card = document.getElementById('q-card');
+
+  // Force re-animation
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = '';
+
+  document.getElementById('q-domain').textContent = q.domain;
+  document.getElementById('q-number').textContent = `Question ${currentIdx + 1} of ${filtered.length}`;
+  document.getElementById('q-text').textContent = q.text;
+  document.getElementById('hdr-domain-lbl').textContent = activeFilter !== 'All' ? activeFilter : '';
+
+  // Options
+  const optWrap = document.getElementById('options');
+  optWrap.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    optWrap.appendChild(btn);
+  });
+
+  // Explanation
+  document.getElementById('explanation').style.display = 'none';
+
+  // If already answered
+  const prev = answered[currentIdx];
+  if (prev !== undefined) {
+    applyAnswerUI(prev, q.correct, q.explanation, q.ref);
+  }
+
+  updateProgress();
+  updateStreakBadge();
+
+  document.getElementById('btn-prev').disabled = currentIdx === 0;
+  document.getElementById('btn-next').textContent =
+    currentIdx === filtered.length - 1 ? 'Finish 🎓' : 'Next →';
+}
+
+function selectAnswer(selectedIdx) {
+  if (answered[currentIdx] !== undefined) return;
+
+  const q = filtered[currentIdx];
+  answered[currentIdx] = selectedIdx;
+
+  if (selectedIdx === q.correct) {
+    correctCount++;
+    streak++;
+    if (streak > bestStreak) bestStreak = streak;
+  } else {
+    wrongCount++;
+    streak = 0;
+  }
+
+  applyAnswerUI(selectedIdx, q.correct, q.explanation, q.ref);
+  renderScores();
+  updateStreakBadge();
+}
+
+function applyAnswerUI(selected, correct, explanation, ref) {
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === correct) btn.classList.add('correct');
+    if (i === selected && selected !== correct) btn.classList.add('wrong');
+  });
+
+  document.getElementById('exp-text').textContent = explanation;
+  document.getElementById('exp-ref').textContent = '📖 ' + ref;
+  document.getElementById('explanation').style.display = 'block';
+}
+
+// ─── NAVIGATION ───
+function nextQ() {
+  if (currentIdx < filtered.length - 1) {
+    currentIdx++;
+    renderQuestion();
+  } else {
+    showResults();
+  }
+}
+
+function prevQ() {
+  if (currentIdx > 0) {
+    currentIdx--;
+    renderQuestion();
+  }
+}
+
+// ─── SCORES ───
+function renderScores() {
+  document.getElementById('sc-correct').textContent = correctCount;
+  document.getElementById('sc-wrong').textContent = wrongCount;
+  const total = correctCount + wrongCount;
+  const pct = total > 0 ? Math.round((correctCount / total) * 100) + '%' : '—';
+  document.getElementById('sc-pct').textContent = pct;
+  document.getElementById('sc-remaining').textContent = filtered.length - Object.keys(answered).length;
+  document.getElementById('hdr-score').textContent = pct;
+}
+
+function updateProgress() {
+  const done = Object.keys(answered).length;
+  const total = filtered.length;
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = `Question ${currentIdx + 1} of ${total}`;
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+
+function updateStreakBadge() {
+  document.getElementById('streak-badge').textContent = `🔥 Streak: ${streak}`;
+  document.getElementById('hdr-streak').textContent = streak;
+}
+
+// ─── RESULTS ───
+function showResults() {
+  document.getElementById('quiz-screen').style.display = 'none';
+  const rs = document.getElementById('results-screen');
+  rs.style.display = 'block';
+
+  const total = correctCount + wrongCount;
+  const pct = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+
+  let emoji = pct >= 75 ? '🏆' : pct >= 60 ? '💪' : '📚';
+  let message = pct >= 75 ? 'PgMP-Ready Performance!' : pct >= 60 ? 'Good Progress — Keep Studying!' : 'More Practice Needed';
+
+  document.getElementById('res-emoji').textContent = emoji;
+  document.getElementById('res-title').textContent = message;
+  document.getElementById('res-subtitle').textContent =
+    `You answered ${correctCount} of ${total} questions correctly.`;
+  document.getElementById('res-correct').textContent = correctCount;
+  document.getElementById('res-pct').textContent = pct + '%';
+  document.getElementById('res-streak').textContent = bestStreak;
+}
+
+function restartQuiz() {
+  currentIdx = 0;
+  answered = {};
+  correctCount = 0;
+  wrongCount = 0;
+  streak = 0;
+  bestStreak = 0;
+  document.getElementById('quiz-screen').style.display = 'block';
+  document.getElementById('results-screen').style.display = 'none';
+  renderScores();
+  renderQuestion();
+}
+
+// ─── START ───
+window.onload = init;
+</script>
+</body>
+</html>
